@@ -14,7 +14,7 @@ class ProductService:
                 return 20.0
 
             raw = self.view.tva_entry.get().strip()
-            if not raw or raw == "TVA %":
+            if not raw or raw == "TVA 20%":
                 return 20.0
 
             val = float(raw)
@@ -61,13 +61,16 @@ class ProductService:
 
             self.refresh_totals()
 
-            self.view.name_entry.delete(0, tk.END)
-            self.view.price_entry.delete(0, tk.END)
-            self.view.qty_entry.delete(0, tk.END)
-            
-            self.view.name_entry.insert(0, "Product name")
-            self.view.price_entry.insert(0, "Price")
-            self.view.qty_entry.insert(0, "Quantity")
+            if hasattr(self.view, "reset_inputs"):
+                self.view.reset_inputs()
+            else:
+                self.view.name_entry.delete(0, tk.END)
+                self.view.price_entry.delete(0, tk.END)
+                self.view.qty_entry.delete(0, tk.END)
+                
+                self.view.name_entry.insert(0, "Product name")
+                self.view.price_entry.insert(0, "Price")
+                self.view.qty_entry.insert(0, "Quantity")
 
         except ValueError as e:
             messagebox.showerror("Error", str(e))

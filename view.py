@@ -69,6 +69,9 @@ class ProductView(tk.Tk):
         vcmd_price = (self.register(self._validate_decimal), "%P")
         vcmd_int = (self.register(self._validate_int), "%P")
         vcmd_vat = (self.register(self._validate_percent), "%P")
+        self._vcmd_price = vcmd_price
+        self._vcmd_int = vcmd_int
+        self._vcmd_vat = vcmd_vat
         self.price_entry.configure(validate="key", validatecommand=vcmd_price)
         self.qty_entry.configure(validate="key", validatecommand=vcmd_int)
         self.tva_entry.configure(validate="key", validatecommand=vcmd_vat)
@@ -77,10 +80,10 @@ class ProductView(tk.Tk):
         self.price_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
         self.qty_entry.grid(row=0, column=2, padx=5, pady=5, sticky="ew")
 
-        self.tva_entry.insert(0, "TVA %")
+        self.tva_entry.insert(0, "TVA 20%")
         self.tva_entry.config(foreground="gray")
-        self.tva_entry.bind("<FocusIn>", lambda e: self.clear_placeholder(e, "TVA %"))
-        self.tva_entry.bind("<FocusOut>", lambda e: self.restore_placeholder(e, "TVA %"))
+        self.tva_entry.bind("<FocusIn>", lambda e: self.clear_placeholder(e, "TVA 20%"))
+        self.tva_entry.bind("<FocusOut>", lambda e: self.restore_placeholder(e, "TVA 20%"))
         self.tva_entry.bind("<KeyRelease>", lambda e: self.controller.refresh_totals())
         self.tva_entry.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
 
@@ -98,7 +101,7 @@ class ProductView(tk.Tk):
             self.table.heading(col, text=col)
 
         self.table.bind("<Double-1>", lambda e: self.controller.edit_selected_product())
-        self.bind("<F10>", lambda e: self.controller.edit_selected_product())
+        self.bind("<*>", lambda e: self.controller.edit_selected_product())
         self.bind("<Delete>", lambda e: self.controller.delete_selected_product())
         self.table.bind("<KeyPress-minus>", lambda e: self.controller.delete_selected_product())
         self.table.bind("<KeyPress-KP_Subtract>", lambda e: self.controller.delete_selected_product())
@@ -209,11 +212,15 @@ class ProductView(tk.Tk):
         name_entry.focus_set()
 
     def _validate_int(self, proposed):
+        if proposed == "Quantity":
+            return True
         if proposed == "":
             return True
         return proposed.isdigit()
 
     def _validate_decimal(self, proposed):
+        if proposed == "Price":
+            return True
         if proposed == "":
             return True
         if proposed.count(".") > 1:
@@ -226,8 +233,26 @@ class ProductView(tk.Tk):
         except Exception:
             return False
 
+    def reset_inputs(self):
+        self._set_placeholder(self.name_entry, "Product name")
+        self._set_placeholder(self.price_entry, "Price", validatecommand=getattr(self, "_vcmd_price", None))
+        self._set_placeholder(self.qty_entry, "Quantity", validatecommand=getattr(self, "_vcmd_int", None))
+
+    def _set_placeholder(self, entry, placeholder_text, validatecommand=None):
+        try:
+            entry.configure(validate="none")
+        except Exception:
+            pass
+
+        entry.delete(0, tk.END)
+        entry.insert(0, placeholder_text)
+        entry.config(foreground="gray")
+
+        if validatecommand is not None:
+            entry.configure(validate="key", validatecommand=validatecommand)
+
     def _validate_percent(self, proposed):
-        if proposed == "TVA %":
+        if proposed == "TVA 20%":
             return True
         if proposed == "":
             return True
